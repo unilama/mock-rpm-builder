@@ -1,21 +1,22 @@
 package org.jenkinsci.plugins.rpmmock;
+
 import com.google.common.io.CharStreams;
+import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Extension;
 import hudson.Proc;
-import hudson.util.FormValidation;
 import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
-import hudson.tasks.Builder;
+import hudson.model.BuildListener;
 import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Builder;
+import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
-import javax.servlet.ServletException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -94,7 +95,7 @@ public class RpmMockBuilder extends Builder {
     }
 
     private String getMockCmd(){
-        return "/usr/bin/mock";
+        return getDescriptor().getMockCmd();
     }
 
     private String getVerboseOption(){
@@ -147,6 +148,7 @@ public class RpmMockBuilder extends Builder {
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
+        protected String mockCmd;
         /**
          * In order to load the persisted global configuration, you have to 
          * call load() in the constructor.
@@ -160,6 +162,7 @@ public class RpmMockBuilder extends Builder {
             return true;
         }
 
+
         /**
          * This human readable specFile is used in the configuration screen.
          */
@@ -169,9 +172,30 @@ public class RpmMockBuilder extends Builder {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            //config to
+            setMockCmd(formData.getString("mockCmd"));
             save();
             return super.configure(req,formData);
+        }
+
+        public FormValidation doCheckMockCmd( @QueryParameter String mockCmd ){
+            File mockExe = new File( mockCmd );
+            if( mockExe.canExecute() ){
+                return FormValidation.error( "Mock command '"+mockCmd+"' must be executable" );
+            }
+
+            return FormValidation.ok();
+        }
+
+        public String defaultMockCmd(){
+            return "/usr/bin/mock";
+        }
+
+        public String getMockCmd() {
+            return mockCmd;
+        }
+
+        public void setMockCmd( String mockCmd ) {
+            this.mockCmd = mockCmd;
         }
     }
 }
