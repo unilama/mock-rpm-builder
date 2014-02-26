@@ -57,16 +57,15 @@ public class RpmMockBuilder extends Builder {
         PrintStream logger = listener.getLogger();
         FilePath workspace = build.getWorkspace();
         CommandRunner commandRunner = getCommandRunner(build, launcher, listener);
-        CommandRunner.CommandResult result;
+        int result = 1;
 
         String sourceDir = workspace+"/SOURCES", specFile = workspace+"/"+getSpecFile();
 
         if( getDownloadSources() ){
             try {
                 result = commandRunner.runCommand("spectool -C {0} -R -g {1}", specFile, sourceDir);
-                logger.append(result.getStdOutput());
-                if( result.isError() ){
-                    logger.println( "Spectool doesn't finish properly, exit code: "+result.getExitCode() );
+                if( CommandRunner.isError( result ) ){
+                    logger.println( "Spectool doesn't finish properly, exit code: "+result );
                     return false;
                 }
             } catch (Exception e) {
@@ -79,9 +78,8 @@ public class RpmMockBuilder extends Builder {
         try {
             command = buildMockCmd()+" --resultdir={0} --buildsrpm --spec {1} --sources {2}";
             result = commandRunner.runCommand(command, resultSRPMDir, specFile, sourceDir );
-            logger.append(result.getStdOutput());
-            if( result.isError() ){
-                logger.println( "Source rpm using mock creation doesn't finish properly, exit code:"+result.getExitCode() );
+            if( CommandRunner.isError(result) ){
+                logger.println( "Source rpm using mock creation doesn't finish properly, exit code:"+result );
                 return false;
             }
         }catch (Exception e) {
@@ -92,9 +90,8 @@ public class RpmMockBuilder extends Builder {
         try {
             command = buildMockCmd()+" --resultdir={0} --rebuild {1}";
             result = commandRunner.runCommand(command, resultRPMDir, resultSRPMDir+"/*.src.rpm");//@todo do it in more convenient way
-            logger.append(result.getStdOutput());
-            if( result.isError() ){
-                logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result.getExitCode() );
+            if( CommandRunner.isError(result) ){
+                logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result );
                 return false;
             }
         }catch (Exception e) {
