@@ -27,7 +27,7 @@ public class CommandRunner {
 
     public int runCommand( String command ) throws Exception {
         try {
-            Proc proc = launcher.launch().envs(envVars).cmdAsSingleString(command).readStdout().stdout(listener).start();
+            Proc proc = launcher.launch().envs(envVars).cmdAsSingleString(command).stdout(listener).start();
             return proc.join();
         } catch (IOException e) {
             e.printStackTrace(listener.getLogger());

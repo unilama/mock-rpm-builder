@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.rpmmock;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -17,6 +18,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
  * Sample {@link Builder}.
@@ -104,7 +106,11 @@ public class RpmMockBuilder extends Builder {
 
     private CommandRunner getCommandRunner(AbstractBuild build, Launcher launcher, BuildListener listener) {
         try {
-            return new CommandRunner(launcher, listener, build.getEnvironment(listener) );
+            EnvVars envVars =build.getEnvironment(listener);
+            for(Map.Entry<String,String> e : ((Map<String,String>)build.getBuildVariables()).entrySet())
+                envVars.put(e.getKey(),e.getValue());
+
+            return new CommandRunner(launcher, listener, envVars );
         } catch (IOException e) {
             e.printStackTrace();
             return new CommandRunner( launcher, listener );
