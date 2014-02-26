@@ -42,12 +42,14 @@ public class RpmMockBuilder extends Builder {
     private final String specFile;
     private final Boolean downloadSources;
     private final Boolean verbose;
+    private final String configName;
 
     @DataBoundConstructor
-    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose) {
+    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName) {
         this.specFile = specFile;
         this.downloadSources = downloadSources;
         this.verbose = verbose;
+        this.configName = configName;
     }
 
     @Override
@@ -68,14 +70,14 @@ public class RpmMockBuilder extends Builder {
                     return false;
                 }
             } catch (Exception e) {
-                logger.println("Downloading sources fail due to: "+e.getMessage());
+                logger.println("Downloading sources fail due to: " + e.getMessage());
                 return false;
             }
         }
 
         String command, resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
         try {
-            command = getMockCmd()+" "+getVerboseOption()+" --resultdir={0} --buildsrpm --spec {1} --sources {2}";
+            command = buildMockCmd()+" --resultdir={0} --buildsrpm --spec {1} --sources {2}";
             result = commandRunner.runCommand(command, resultSRPMDir, specFile, sourceDir );
             logger.append(result.getStdOutput());
             if( result.isError() ){
@@ -83,12 +85,12 @@ public class RpmMockBuilder extends Builder {
                 return false;
             }
         }catch (Exception e) {
-            logger.println("Building source RPM fail due to: "+e.getMessage());
+            logger.println("Building source RPM fail due to: " + e.getMessage());
             return false;
         }
 
         try {
-            command = getMockCmd()+" "+getVerboseOption()+" --resultdir={0} --rebuild {1}";
+            command = buildMockCmd()+" --resultdir={0} --rebuild {1}";
             result = commandRunner.runCommand(command, resultRPMDir, resultSRPMDir+"/*.src.rpm");//@todo do it in more convenient way
             logger.append(result.getStdOutput());
             if( result.isError() ){
@@ -96,7 +98,7 @@ public class RpmMockBuilder extends Builder {
                 return false;
             }
         }catch (Exception e) {
-            logger.println("Building RPM fail due to: "+e.getMessage());
+            logger.println("Building RPM fail due to: " + e.getMessage());
             return false;
         }
 
@@ -115,8 +117,8 @@ public class RpmMockBuilder extends Builder {
         }
     }
 
-    private String getMockCmd(){
-        return getDescriptor().getMockCmd();
+    private String buildMockCmd(){
+        return getDescriptor().getMockCmd()+" "+getVerboseOption()+" -r "+getConfigName()+" ";
     }
 
     private String getVerboseOption(){
@@ -145,6 +147,10 @@ public class RpmMockBuilder extends Builder {
 
     public String getSpecFile() {
         return specFile;
+    }
+
+    public String getConfigName() {
+        return configName;
     }
 
     /**
