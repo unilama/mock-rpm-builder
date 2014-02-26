@@ -10,5 +10,8 @@
     </f:entry>
     <f:entry title="Configuration name" field="configName">
         <f:textbox default="default" />
-      </f:entry>
+    </f:entry>
+    <f:entry title="Source RPM filename pattern" field="srcRpmRegExp">
+        <f:textbox default=".src.rpm$" />
+    </f:entry>
 </j:jelly>

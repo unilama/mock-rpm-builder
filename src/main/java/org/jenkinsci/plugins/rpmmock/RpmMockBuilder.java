@@ -16,9 +16,11 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Sample {@link Builder}.
@@ -45,13 +47,15 @@ public class RpmMockBuilder extends Builder {
     private final Boolean downloadSources;
     private final Boolean verbose;
     private final String configName;
+    private final String srcRpmRegExp;
 
     @DataBoundConstructor
-    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName) {
+    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName, String srcRpmRegExp) {
         this.specFile = specFile;
         this.downloadSources = downloadSources;
         this.verbose = verbose;
         this.configName = configName;
+        this.srcRpmRegExp = srcRpmRegExp;
     }
 
     @Override
@@ -96,7 +100,7 @@ public class RpmMockBuilder extends Builder {
 
         try {
             command = buildMockCmd()+" --resultdir={0} --rebuild {1}";
-            result = commandRunner.runCommand(command, resultRPMDir, resultSRPMDir+"/*.src.rpm");//@todo do it in more convenient way
+            result = commandRunner.runCommand(command, resultRPMDir, getSRPMFile(resultSRPMDir));//@todo do it in more convenient way
             if( CommandRunner.isError(result) ){
                 logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result );
                 return false;
@@ -107,6 +111,28 @@ public class RpmMockBuilder extends Builder {
         }
 
         return true;
+    }
+
+    private String getSRPMFile(String SRPMDirName) throws FileNotFoundException {
+        File SRPMDir = new File(SRPMDirName);
+        if( SRPMDir.isDirectory() ){
+            throw new FileNotFoundException( "SRPM dir doesn't exists or is not a dir." );
+        }
+
+        Pattern pattern = getSrcRpmFilenamePattern();
+        String filename = "";
+        for( File file : SRPMDir.listFiles() ){
+            filename = file.getName();
+            if( pattern.matcher(filename).matches() ){
+                return SRPMDir+filename;
+            }
+        }
+
+        throw new FileNotFoundException( "Can't find any source RPM. Regular expression used: "+pattern );
+    }
+
+    private Pattern getSrcRpmFilenamePattern() {
+        return Pattern.compile( getSrcRpmRegExp() );
     }
 
     private CommandRunner getCommandRunner(AbstractBuild build, Launcher launcher, BuildListener listener) {
@@ -160,6 +186,8 @@ public class RpmMockBuilder extends Builder {
     public String getConfigName() {
         return configName;
     }
+
+    public String getSrcRpmRegExp() { return srcRpmRegExp; }
 
     /**
      * Descriptor for {@link RpmMockBuilder}. Used as a singleton.
