@@ -65,7 +65,7 @@ public class RpmMockBuilder extends Builder {
 
         if( getDownloadSources() ){
             try {
-                result = commandRunner.runCommand("spectool -C {0} -R -g {1}", specFile, sourceDir);
+                result = commandRunner.runCommand("spectool -g {0} -R -C {0}", specFile, sourceDir );
                 if( CommandRunner.isError( result ) ){
                     logger.println( "Spectool doesn't finish properly, exit code: "+result );
                     return false;
