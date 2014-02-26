@@ -70,7 +70,7 @@ public class RpmMockBuilder extends Builder {
                     verboseParam = "-D";
                 }
 
-                result = commandRunner.runCommand("spectool -g {0} -R -C {0} "+verboseParam, specFile, sourceDir );
+                result = commandRunner.runCommand("spectool -g {0} -R -C {1} {2}", specFile, sourceDir, verboseParam );
                 if( CommandRunner.isError( result ) ){
                     logger.println( "Spectool doesn't finish properly, exit code: "+result );
                     return false;
