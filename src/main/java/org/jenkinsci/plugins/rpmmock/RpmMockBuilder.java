@@ -1,10 +1,8 @@
 package org.jenkinsci.plugins.rpmmock;
 
-import com.google.common.io.CharStreams;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Proc;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
@@ -18,9 +16,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.text.MessageFormat;
 
 /**
  * Sample {@link Builder}.
@@ -58,40 +54,65 @@ public class RpmMockBuilder extends Builder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         PrintStream logger = listener.getLogger();
         FilePath workspace = build.getWorkspace();
+        CommandRunner commandRunner = getCommandRunner(build, launcher, listener);
+        CommandRunner.CommandResult result;
 
         String sourceDir = workspace+"/SOURCES", specFile = workspace+"/"+getSpecFile();
 
         if( getDownloadSources() ){
             try {
-                logger.append(runShellCommand(launcher, listener, "spectool -C {0} -R -g {1}", specFile, sourceDir));
+                result = commandRunner.runCommand("spectool -C {0} -R -g {1}", specFile, sourceDir);
+                logger.append(result.getStdOutput());
+                if( result.isError() ){
+                    logger.println( "Spectool doesn't finish properly, exit code: "+result.getExitCode() );
+                    return false;
+                }
             } catch (Exception e) {
-                logger.append("Downloading sources fail due to: "+e.getMessage());
+                logger.println("Downloading sources fail due to: "+e.getMessage());
                 return false;
             }
         }
 
-        String result, command, resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
+        String command, resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
         try {
-            //@todo check exit code
             command = getMockCmd()+" "+getVerboseOption()+" --resultdir={0} --buildsrpm --spec {1} --sources {2}";
-            result = runShellCommand(launcher, listener, command, resultSRPMDir, specFile, sourceDir );
-            logger.append(result);
+            result = commandRunner.runCommand(command, resultSRPMDir, specFile, sourceDir );
+            logger.append(result.getStdOutput());
+            if( result.isError() ){
+                logger.println( "Source rpm using mock creation doesn't finish properly, exit code:"+result.getExitCode() );
+                return false;
+            }
         }catch (Exception e) {
-            logger.append("Building source RPM fail due to: "+e.getMessage());
+            logger.println("Building source RPM fail due to: "+e.getMessage());
             return false;
         }
 
         try {
-            //@todo check exit code
             command = getMockCmd()+" "+getVerboseOption()+" --resultdir={0} --rebuild {1}";
-            result = runShellCommand(launcher, listener, command, resultRPMDir, resultSRPMDir+"/*.src.rpm" );
-            logger.append(result);
+            result = commandRunner.runCommand(command, resultRPMDir, resultSRPMDir+"/*.src.rpm");//@todo do it in more convenient way
+            logger.append(result.getStdOutput());
+            if( result.isError() ){
+                logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result.getExitCode() );
+                return false;
+            }
         }catch (Exception e) {
-            logger.append("Building RPM fail due to: "+e.getMessage());
+            logger.println("Building RPM fail due to: "+e.getMessage());
             return false;
         }
 
         return true;
+    }
+
+    private CommandRunner getCommandRunner(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        try {
+            return new CommandRunner(launcher, listener, build.getEnvironment(listener) );
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new CommandRunner( launcher, listener );
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return new CommandRunner( launcher, listener );
+        }
     }
 
     private String getMockCmd(){
@@ -104,17 +125,6 @@ public class RpmMockBuilder extends Builder {
         }
 
         return "";
-    }
-
-    private String runShellCommand( Launcher launcher, BuildListener listener, String cmd, Object... params ) throws Exception {
-        String command = MessageFormat.format(cmd, params);
-        try {
-            Proc proc = launcher.launch().cmdAsSingleString(command).readStdout().start();
-            return CharStreams.toString(new InputStreamReader(proc.getStdout()));
-        } catch (IOException e) {
-            e.printStackTrace(listener.getLogger());
-            throw new Exception(MessageFormat.format("Command <{0}> failed", command), e);
-        }
     }
 
     // Overridden for better type safety.
