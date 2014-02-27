@@ -65,6 +65,7 @@ public class RpmMockBuilder extends Builder {
         CommandRunner commandRunner = getCommandRunner(build, launcher, listener);
         int result = 1;
 
+        //@todo add to configuration
         String sourceDir = workspace+"/SOURCES", specFile = workspace+"/"+getSpecFile();
 
         if( getDownloadSources() ){
@@ -85,6 +86,7 @@ public class RpmMockBuilder extends Builder {
             }
         }
 
+        //@todo add to configuration
         String command, resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
         try {
             command = buildMockCmd()+" --resultdir={0} --buildsrpm --spec {1} --sources {2}";
@@ -100,13 +102,14 @@ public class RpmMockBuilder extends Builder {
 
         try {
             command = buildMockCmd()+" --resultdir={0} --rebuild {1}";
-            result = commandRunner.runCommand(command, resultRPMDir, getSRPMFile(resultSRPMDir+"/"));
+            result = commandRunner.runCommand(command, resultRPMDir, getSRPMFile(resultSRPMDir));
             if( CommandRunner.isError(result) ){
                 logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result );
                 return false;
             }
         }catch (Exception e) {
             logger.println("Building RPM fail due to: " + e.getMessage());
+            e.printStackTrace(logger);
             return false;
         }
 
@@ -114,6 +117,7 @@ public class RpmMockBuilder extends Builder {
     }
 
     private String getSRPMFile(String SRPMDirName) throws IOException {
+        //@todo add remove trailing slash
         File SRPMDir = new File(SRPMDirName).getCanonicalFile();
         if( !SRPMDir.isDirectory() ){
             throw new FileNotFoundException( "SRPM dir doesn't exists or is not a dir("+SRPMDirName+")." );
@@ -123,8 +127,8 @@ public class RpmMockBuilder extends Builder {
         String filename = "";
         for( File file : SRPMDir.listFiles() ){
             filename = file.getName();
-            if( pattern.matcher(filename).matches() ){
-                return SRPMDir+filename;
+            if( pattern.matcher(filename).find() ){
+                return SRPMDir+"/"+filename;
             }
         }
 
