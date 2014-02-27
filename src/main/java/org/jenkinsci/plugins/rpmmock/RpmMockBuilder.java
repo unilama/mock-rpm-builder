@@ -100,7 +100,7 @@ public class RpmMockBuilder extends Builder {
 
         try {
             command = buildMockCmd()+" --resultdir={0} --rebuild {1}";
-            result = commandRunner.runCommand(command, resultRPMDir, getSRPMFile(resultSRPMDir));//@todo do it in more convenient way
+            result = commandRunner.runCommand(command, resultRPMDir, getSRPMFile(resultSRPMDir+"/"));
             if( CommandRunner.isError(result) ){
                 logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result );
                 return false;
@@ -113,10 +113,10 @@ public class RpmMockBuilder extends Builder {
         return true;
     }
 
-    private String getSRPMFile(String SRPMDirName) throws FileNotFoundException {
-        File SRPMDir = new File(SRPMDirName);
-        if( SRPMDir.isDirectory() ){
-            throw new FileNotFoundException( "SRPM dir doesn't exists or is not a dir." );
+    private String getSRPMFile(String SRPMDirName) throws IOException {
+        File SRPMDir = new File(SRPMDirName).getCanonicalFile();
+        if( !SRPMDir.isDirectory() ){
+            throw new FileNotFoundException( "SRPM dir doesn't exists or is not a dir("+SRPMDirName+")." );
         }
 
         Pattern pattern = getSrcRpmFilenamePattern();
