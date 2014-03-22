@@ -1,13 +1,11 @@
-package org.jenkinsci.plugins.rpmmock;
+package org.jenkinsci.plugins.rpmmock.cmdrunner;
 
-import com.google.common.io.CharStreams;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.TaskListener;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
 
 public class CommandRunner {
@@ -41,6 +39,10 @@ public class CommandRunner {
 
     public int runCommand( String cmd, Object... params ) throws Exception {
         return runCommand(MessageFormat.format(cmd, params));
+    }
+
+    public int runCommand( RunnerInterface runner ) throws Exception {
+        return runCommand( runner.getCommand());
     }
 
     public static boolean isError(int exitCode){

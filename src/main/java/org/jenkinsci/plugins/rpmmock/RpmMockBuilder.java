@@ -11,6 +11,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.rpmmock.cmdrunner.CommandRunner;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -39,7 +40,7 @@ import java.util.regex.Pattern;
  *
  * @author Marcin Stanisławski <marcin.stanislawski@gmail.com>
  *
- * @todo add auto changelog
+ * TODO: add auto changelog
  */
 public class RpmMockBuilder extends Builder {
 
@@ -63,19 +64,20 @@ public class RpmMockBuilder extends Builder {
         PrintStream logger = listener.getLogger();
         FilePath workspace = build.getWorkspace();
         CommandRunner commandRunner = getCommandRunner(build, launcher, listener);
-        int result = 1;
+        int result;
 
         //@todo add to configuration
         String sourceDir = workspace+"/SOURCES", specFile = workspace+"/"+getSpecFile();
 
         if( getDownloadSources() ){
-            try {
-                String verboseParam = "";
-                if( getVerbose() ){
-                    verboseParam = "-D";
-                }
 
-                result = commandRunner.runCommand("spectool -g {0} -R -C {1} {2}", specFile, sourceDir, verboseParam );
+            final SpecToolRunner specToolRunner = SpecToolRunner.buildSourceDownloader(specFile, sourceDir);
+            if( getVerbose() ){
+                specToolRunner.setVerbose();
+            }
+
+            try {
+                result = commandRunner.runCommand( specToolRunner );
                 if( CommandRunner.isError( result ) ){
                     logger.println( "Spectool doesn't finish properly, exit code: "+result );
                     return false;
@@ -87,10 +89,11 @@ public class RpmMockBuilder extends Builder {
         }
 
         //@todo add to configuration
-        String command, resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
+        String resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
+        MockRunner mockRunner = buildMockRunner();
+        mockRunner.setupSrpmBuilder( resultSRPMDir, specFile, sourceDir );
         try {
-            command = buildMockCmd()+" --resultdir={0} --buildsrpm --spec {1} --sources {2}";
-            result = commandRunner.runCommand(command, resultSRPMDir, specFile, sourceDir );
+            result = commandRunner.runCommand(mockRunner );
             if( CommandRunner.isError(result) ){
                 logger.println( "Source rpm using mock creation doesn't finish properly, exit code:"+result );
                 return false;
@@ -100,9 +103,10 @@ public class RpmMockBuilder extends Builder {
             return false;
         }
 
+        mockRunner = buildMockRunner();
         try {
-            command = buildMockCmd()+" --resultdir={0} --rebuild {1}";
-            result = commandRunner.runCommand(command, resultRPMDir, getSRPMFile(resultSRPMDir));
+            mockRunner.setupRebuild( resultRPMDir, getSRPMFile(resultSRPMDir) );
+            result = commandRunner.runCommand(mockRunner);
             if( CommandRunner.isError(result) ){
                 logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result );
                 return false;
@@ -124,7 +128,8 @@ public class RpmMockBuilder extends Builder {
         }
 
         Pattern pattern = getSrcRpmFilenamePattern();
-        String filename = "";
+        String filename;
+
         for( File file : SRPMDir.listFiles() ){
             filename = file.getName();
             if( pattern.matcher(filename).find() ){
@@ -155,16 +160,13 @@ public class RpmMockBuilder extends Builder {
         }
     }
 
-    private String buildMockCmd(){
-        return getDescriptor().getMockCmd()+" "+getVerboseOption()+" -r "+getConfigName()+" ";
-    }
-
-    private String getVerboseOption(){
-        if( getVerbose() ){
-            return " -v ";
+    private MockRunner buildMockRunner(){
+        MockRunner mockRunner = new MockRunner(getDescriptor().getMockCmd());
+        if(getVerbose()){
+            mockRunner.setVerbose();
         }
-
-        return "";
+        mockRunner.setConfigName( getConfigName() );
+        return mockRunner;
     }
 
     // Overridden for better type safety.
