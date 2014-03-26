@@ -33,15 +33,7 @@ public class Param {
     }
 
     public String toString() {
-        final String[] arguments;
-
-        if( type == ParamType.NAMELESS ){
-            arguments = new String[]{getValue()};
-        }else {
-            arguments = new String[]{getName(), getValue()};
-        }
-
-        return MessageFormat.format(getFormat(), arguments );
+        return MessageFormat.format(getFormat(), new String[]{getName(), getValue()} );
     }
 
 
@@ -49,15 +41,15 @@ public class Param {
     public String getFormat() {
         switch( type ){
             case DEFAULT:
-                return "--{}=\"{}\"";
+                return "--{0}=\"{1}\"";
             case SIMPLE:
-                return "-{} {}";
+                return "-{0} {1}";
             case NO_VALUE:
-                return "-{}";
+                return "-{0}";
             case NO_VALUE_LONG:
-                return "--{}";
+                return "--{0}";
             case NAMELESS:
-                return "{}";
+                return "{1}";
             default:
                 return "";
         }
