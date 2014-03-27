@@ -50,15 +50,17 @@ public class RpmMockBuilder extends Builder {
     private final String configName;
     private final String srcRpmRegExp;
     private boolean uniqueMockPerBuild;
+    private String configPath;
 
     @DataBoundConstructor
-    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName, String srcRpmRegExp, Boolean uniqueMockPerBuild ) {
+    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName, String srcRpmRegExp, Boolean uniqueMockPerBuild, String configPath ) {
         this.specFile = specFile;
         this.downloadSources = downloadSources;
         this.verbose = verbose;
         this.configName = configName;
         this.srcRpmRegExp = srcRpmRegExp;
         this.uniqueMockPerBuild = uniqueMockPerBuild;
+        this.configPath = configPath;
     }
 
     @Override
@@ -167,7 +169,7 @@ public class RpmMockBuilder extends Builder {
         if (getVerbose()) {
             mockRunner.setVerbose();
         }
-        mockRunner.setConfigName(getConfigName());
+        mockRunner.setConfigName(getConfigName(), getConfigPath() );
         if (getUniqueMockPerBuild()) {
             mockRunner.setUniqueText(sanitizeBuildName(buildName));
         }
@@ -206,6 +208,10 @@ public class RpmMockBuilder extends Builder {
 
     public boolean getUniqueMockPerBuild() {
         return uniqueMockPerBuild;
+    }
+
+    public String getConfigPath() {
+        return configPath.trim();
     }
 
     /**

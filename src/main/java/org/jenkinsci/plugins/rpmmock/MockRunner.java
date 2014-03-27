@@ -10,7 +10,13 @@ public class MockRunner extends DefaultRunner{
 
 
     public void setConfigName(String configName) {
+        setConfigName(configName, null);
+    }
+     public void setConfigName( String configName, String path ){
         addParamWithValue("r", configName );
+        if( !( path == null || path.isEmpty() ) ){
+            addParamWithValue( "configdir", path, Param.ParamType.DEFAULT );
+        }
     }
 
     public void setVerbose() {

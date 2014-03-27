@@ -1,20 +1,25 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Spec file" field="specFile">
-    <f:textbox />
-  </f:entry>
-  <f:entry title="Download sources" field="downloadSources">
-      <f:checkbox />
-  </f:entry>
+    <f:entry title="Spec file" field="specFile">
+        <f:textbox />
+    </f:entry>
     <f:entry title="Use verbose mode" field="verbose">
         <f:checkbox />
     </f:entry>
     <f:entry title="Use unique mock for build" field="uniqueMockPerBuild">
-        <f:checkbox default="checked" />
+        <f:checkbox default="true" />
     </f:entry>
     <f:entry title="Configuration name" field="configName">
         <f:textbox default="default" />
     </f:entry>
-    <f:entry title="Source RPM filename pattern" field="srcRpmRegExp">
-        <f:textbox default=".src.rpm$" />
-    </f:entry>
+    <f:advanced>
+        <f:entry title="Source RPM filename pattern" field="srcRpmRegExp">
+            <f:textbox default=".src.rpm$" />
+        </f:entry>
+        <f:entry title="Path to mock configuration files" field="configPath">
+            <f:textbox default="" />
+        </f:entry>
+        <f:entry title="Download sources" field="downloadSources">
+            <f:checkbox default="true" />
+        </f:entry>
+    </f:advanced>
 </j:jelly>
