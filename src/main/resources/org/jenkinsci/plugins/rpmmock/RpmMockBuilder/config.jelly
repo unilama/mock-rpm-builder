@@ -8,6 +8,9 @@
     <f:entry title="Use verbose mode" field="verbose">
         <f:checkbox />
     </f:entry>
+    <f:entry title="Use unique mock for build" field="uniqueMockPerBuild">
+        <f:checkbox default="checked" />
+    </f:entry>
     <f:entry title="Configuration name" field="configName">
         <f:textbox default="default" />
     </f:entry>

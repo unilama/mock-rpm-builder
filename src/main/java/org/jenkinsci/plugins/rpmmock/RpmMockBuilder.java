@@ -49,14 +49,16 @@ public class RpmMockBuilder extends Builder {
     private final Boolean verbose;
     private final String configName;
     private final String srcRpmRegExp;
+    private boolean uniqueMockPerBuild;
 
     @DataBoundConstructor
-    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName, String srcRpmRegExp) {
+    public RpmMockBuilder(String specFile, Boolean downloadSources, Boolean verbose, String configName, String srcRpmRegExp, Boolean uniqueMockPerBuild ) {
         this.specFile = specFile;
         this.downloadSources = downloadSources;
         this.verbose = verbose;
         this.configName = configName;
         this.srcRpmRegExp = srcRpmRegExp;
+        this.uniqueMockPerBuild = uniqueMockPerBuild;
     }
 
     @Override
@@ -90,7 +92,7 @@ public class RpmMockBuilder extends Builder {
 
         //@todo add to configuration
         String resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
-        MockRunner mockRunner = buildMockRunner();
+        MockRunner mockRunner = buildMockRunner(build.getDisplayName());
         mockRunner.setupSrpmBuilder( resultSRPMDir, specFile, sourceDir );
         try {
             result = commandRunner.runCommand(mockRunner );
@@ -103,7 +105,7 @@ public class RpmMockBuilder extends Builder {
             return false;
         }
 
-        mockRunner = buildMockRunner();
+        mockRunner = buildMockRunner(build.getDisplayName());
         try {
             mockRunner.setupRebuild( resultRPMDir, getSRPMFile(resultSRPMDir) );
             result = commandRunner.runCommand(mockRunner);
@@ -160,13 +162,20 @@ public class RpmMockBuilder extends Builder {
         }
     }
 
-    private MockRunner buildMockRunner(){
+    private MockRunner buildMockRunner(String buildName) {
         MockRunner mockRunner = new MockRunner(getDescriptor().getMockCmd());
-        if(getVerbose()){
+        if (getVerbose()) {
             mockRunner.setVerbose();
         }
-        mockRunner.setConfigName( getConfigName() );
+        mockRunner.setConfigName(getConfigName());
+        if (getUniqueMockPerBuild()) {
+            mockRunner.setUniqueText(sanitizeBuildName(buildName));
+        }
         return mockRunner;
+    }
+
+    private String sanitizeBuildName(String buildName) {
+        return buildName.toLowerCase().replaceAll("[^a-z0-9-_]", "-");
     }
 
     // Overridden for better type safety.
@@ -194,6 +203,10 @@ public class RpmMockBuilder extends Builder {
     }
 
     public String getSrcRpmRegExp() { return srcRpmRegExp; }
+
+    public boolean getUniqueMockPerBuild() {
+        return uniqueMockPerBuild;
+    }
 
     /**
      * Descriptor for {@link RpmMockBuilder}. Used as a singleton.

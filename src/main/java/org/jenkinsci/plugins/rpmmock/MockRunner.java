@@ -45,7 +45,19 @@ public class MockRunner extends DefaultRunner{
         setRebuildSrpm(srpmFile);
     }
 
-    private void setRebuildSrpm(String srpmFile) {
+    public void setRebuildSrpm(String srpmFile) {
         addParamWithValue("rebuild", srpmFile, Param.ParamType.DEFAULT);
+    }
+
+    public void setUniqueText(String buildName) {
+        addParamWithValue("uniqueext",buildName, Param.ParamType.DEFAULT);
+    }
+
+    public void setNoCleanupAfter(){
+        addParamWithValue("no-cleanup-after", "", Param.ParamType.NO_VALUE_LONG);
+    }
+
+    public void setNoClean(){
+        addParamWithValue("no-clean", "", Param.ParamType.NO_VALUE_LONG);
     }
 }
