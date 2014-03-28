@@ -52,7 +52,8 @@ public class MockRunner extends DefaultRunner{
     }
 
     public void setRebuildSrpm(String srpmFile) {
-        addParamWithValue("rebuild", srpmFile, Param.ParamType.DEFAULT);
+        addParam( new Param("rebuild", Param.ParamType.NO_VALUE_LONG) );
+        addNamelessParam( srpmFile );
     }
 
     public void setUniqueText(String buildName) {

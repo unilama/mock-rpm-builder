@@ -67,15 +67,16 @@ public class RpmMockBuilder extends Builder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         PrintStream logger = listener.getLogger();
         FilePath workspace = build.getWorkspace();
+
         CommandRunner commandRunner = getCommandRunner(build, launcher, listener);
         int result;
 
         //@todo add to configuration
-        String sourceDir = workspace+"/SOURCES", specFile = workspace+"/"+getSpecFile();
+        FilePath sourceDir = new FilePath( workspace, "SOURCES"), specFile = new FilePath( workspace, getSpecFile() );
 
         if( getDownloadSources() ){
 
-            final SpecToolRunner specToolRunner = SpecToolRunner.buildSourceDownloader(specFile, sourceDir);
+            final SpecToolRunner specToolRunner = SpecToolRunner.buildSourceDownloader(specFile.getRemote(), sourceDir.getRemote());
             if( getVerbose() ){
                 specToolRunner.setVerbose();
             }
@@ -93,9 +94,9 @@ public class RpmMockBuilder extends Builder {
         }
 
         //@todo add to configuration
-        String resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
+        FilePath resultSRPMDir = new FilePath( workspace, "SRPMS" ), resultRPMDir = new FilePath( workspace, "RPMS" );
         MockRunner mockRunner = buildMockRunner(build);
-        mockRunner.setupSrpmBuilder( resultSRPMDir, specFile, sourceDir );
+        mockRunner.setupSrpmBuilder( resultSRPMDir.getRemote(), specFile.getRemote(), sourceDir.getRemote() );
         try {
             result = commandRunner.runCommand(mockRunner );
             if( CommandRunner.isError(result) ){
@@ -109,7 +110,7 @@ public class RpmMockBuilder extends Builder {
 
         mockRunner = buildMockRunner(build);
         try {
-            mockRunner.setupRebuild( resultRPMDir, getSRPMFile(resultSRPMDir) );
+            mockRunner.setupRebuild( resultRPMDir.getRemote(), getSRPMFile(resultSRPMDir).getRemote() );
             result = commandRunner.runCommand(mockRunner);
             if( CommandRunner.isError(result) ){
                 logger.println( "Rpm using mock creation doesn't finish properly, exit code: "+result );
@@ -124,21 +125,24 @@ public class RpmMockBuilder extends Builder {
         return true;
     }
 
-    private String getSRPMFile(String SRPMDirName) throws IOException {
-        //@todo add remove trailing slash
-        File SRPMDir = new File(SRPMDirName).getCanonicalFile();
-        if( !SRPMDir.isDirectory() ){
-            throw new FileNotFoundException( "SRPM dir doesn't exists or is not a dir("+SRPMDirName+")." );
-        }
+    private FilePath getSRPMFile(FilePath SRPMDir) throws IOException {
 
         Pattern pattern = getSrcRpmFilenamePattern();
         String filename;
 
-        for( File file : SRPMDir.listFiles() ){
-            filename = file.getName();
-            if( pattern.matcher(filename).find() ){
-                return SRPMDir+"/"+filename;
+        try {
+            if( !SRPMDir.isDirectory() ){
+                throw new FileNotFoundException( "SRPM dir doesn't exists or is not a dir("+SRPMDir.getRemote()+")." );
             }
+
+            for( FilePath file : SRPMDir.list() ){
+                filename = file.getName();
+                if( pattern.matcher(filename).find() ){
+                    return file;
+                }
+            }
+        } catch (InterruptedException e) {
+            throw new FileNotFoundException( "Problem with find SRPM file");
         }
 
         throw new FileNotFoundException( "Can't find any source RPM. Regular expression used: "+pattern );
