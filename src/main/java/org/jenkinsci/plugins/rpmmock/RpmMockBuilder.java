@@ -172,7 +172,7 @@ public class RpmMockBuilder extends Builder {
         mockRunner.setConfigName(getConfigName(), getConfigPath( build.getWorkspace() ) );
 
         if (getUniqueMockPerBuild()) {
-            mockRunner.setUniqueText(sanitizeBuildName(build.getDisplayName()));
+            mockRunner.setUniqueText(sanitizeBuildName(build.getProject().getName()));
         }
         return mockRunner;
     }
