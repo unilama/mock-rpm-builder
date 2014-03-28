@@ -94,7 +94,7 @@ public class RpmMockBuilder extends Builder {
 
         //@todo add to configuration
         String resultSRPMDir = workspace+"/SRPMS", resultRPMDir = workspace+"/RPMS";
-        MockRunner mockRunner = buildMockRunner(build.getDisplayName());
+        MockRunner mockRunner = buildMockRunner(build);
         mockRunner.setupSrpmBuilder( resultSRPMDir, specFile, sourceDir );
         try {
             result = commandRunner.runCommand(mockRunner );
@@ -107,7 +107,7 @@ public class RpmMockBuilder extends Builder {
             return false;
         }
 
-        mockRunner = buildMockRunner(build.getDisplayName());
+        mockRunner = buildMockRunner(build);
         try {
             mockRunner.setupRebuild( resultRPMDir, getSRPMFile(resultSRPMDir) );
             result = commandRunner.runCommand(mockRunner);
@@ -164,14 +164,15 @@ public class RpmMockBuilder extends Builder {
         }
     }
 
-    private MockRunner buildMockRunner(String buildName) {
+    private MockRunner buildMockRunner(AbstractBuild build) {
         MockRunner mockRunner = new MockRunner(getDescriptor().getMockCmd());
         if (getVerbose()) {
             mockRunner.setVerbose();
         }
-        mockRunner.setConfigName(getConfigName(), getConfigPath() );
+        mockRunner.setConfigName(getConfigName(), getConfigPath( build.getWorkspace() ) );
+
         if (getUniqueMockPerBuild()) {
-            mockRunner.setUniqueText(sanitizeBuildName(buildName));
+            mockRunner.setUniqueText(sanitizeBuildName(build.getDisplayName()));
         }
         return mockRunner;
     }
@@ -210,8 +211,12 @@ public class RpmMockBuilder extends Builder {
         return uniqueMockPerBuild;
     }
 
-    public String getConfigPath() {
-        return configPath.trim();
+    public String getConfigPath(FilePath workspace) {
+        String configPathClean = configPath.trim();
+        if( !configPathClean.isEmpty() ){
+            return workspace+"/"+configPathClean;
+        }
+        return configPathClean;
     }
 
     /**
