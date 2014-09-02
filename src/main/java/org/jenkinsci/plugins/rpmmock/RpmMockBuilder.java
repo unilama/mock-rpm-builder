@@ -50,6 +50,7 @@ public class RpmMockBuilder extends Builder {
     private final String configName;
     private final String srcRpmRegExp;
     private boolean uniqueMockPerBuild;
+
     private String configPath;
 
     @DataBoundConstructor
@@ -173,7 +174,7 @@ public class RpmMockBuilder extends Builder {
         if (getVerbose()) {
             mockRunner.setVerbose();
         }
-        mockRunner.setConfigName(getConfigName(), getConfigPath( build.getWorkspace() ) );
+        mockRunner.setConfigName(getConfigName(), getFullConfigPath(build.getWorkspace()) );
 
         if (getUniqueMockPerBuild()) {
             mockRunner.setUniqueText(sanitizeBuildName(build.getProject().getName()));
@@ -201,6 +202,10 @@ public class RpmMockBuilder extends Builder {
         return verbose;
     }
 
+    public String getConfigPath() {
+        return configPath;
+    }
+
     public String getSpecFile() {
         return specFile;
     }
@@ -215,7 +220,7 @@ public class RpmMockBuilder extends Builder {
         return uniqueMockPerBuild;
     }
 
-    public String getConfigPath(FilePath workspace) {
+    public String getFullConfigPath(FilePath workspace) {
         String configPathClean = configPath.trim();
         if( !configPathClean.isEmpty() ){
             return workspace+"/"+configPathClean;
