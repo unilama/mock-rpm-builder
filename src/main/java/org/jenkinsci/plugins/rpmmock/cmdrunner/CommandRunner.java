@@ -4,6 +4,7 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.TaskListener;
+import hudson.util.ArgumentListBuilder;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -20,7 +21,7 @@ public class CommandRunner {
     }
 
     public CommandRunner( Launcher launcher, TaskListener listener ){
-        this(launcher, listener, new EnvVars());
+        this(launcher, listener, (EnvVars) EnvVars.masterEnvVars);
     }
 
     public int runCommand( String command ) throws Exception {
@@ -37,12 +38,25 @@ public class CommandRunner {
 
     }
 
+    public int runCommand(ArgumentListBuilder argumentListBuilder) throws Exception {
+        try {
+            Proc proc = launcher.launch().envs(envVars).cmds(argumentListBuilder).stdout(listener).start();
+            return proc.join();
+        } catch (IOException e) {
+            e.printStackTrace(listener.getLogger());
+            throw new Exception(MessageFormat.format("Command <{0}> failed", argumentListBuilder.toString()), e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new Exception(MessageFormat.format("Command <{0}> failed", argumentListBuilder.toString()), e);
+        }
+    }
+
     public int runCommand( String cmd, Object... params ) throws Exception {
         return runCommand(MessageFormat.format(cmd, params));
     }
 
     public int runCommand( RunnerInterface runner ) throws Exception {
-        return runCommand( runner.getCommand());
+        return runCommand( runner.toArgumentListBuilder());
     }
 
     public static boolean isError(int exitCode){

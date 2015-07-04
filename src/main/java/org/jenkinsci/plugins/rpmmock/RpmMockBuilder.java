@@ -72,7 +72,8 @@ public class RpmMockBuilder extends Builder {
         int result;
 
         //@todo add to configuration
-        FilePath sourceDir = new FilePath( workspace, "SOURCES"), specFile = new FilePath( workspace, getSpecFile() );
+        FilePath sourceDir = new FilePath( workspace, "SOURCES"),
+                 specFile = new FilePath( workspace, getSpecFile() );
 
         if( getDownloadSources() ){
 
@@ -94,7 +95,8 @@ public class RpmMockBuilder extends Builder {
         }
 
         //@todo add to configuration
-        FilePath resultSRPMDir = new FilePath( workspace, "SRPMS" ), resultRPMDir = new FilePath( workspace, "RPMS" );
+        FilePath resultSRPMDir = new FilePath( workspace, "SRPMS" ),
+                 resultRPMDir = new FilePath( workspace, "RPMS" );
         MockRunner mockRunner = buildMockRunner(build);
         mockRunner.setupSrpmBuilder( resultSRPMDir.getRemote(), specFile.getRemote(), sourceDir.getRemote() );
         try {

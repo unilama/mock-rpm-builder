@@ -5,6 +5,9 @@ import java.text.MessageFormat;
 
 
 public class Param {
+
+    private boolean masked = false;
+
     public enum ParamType { SIMPLE, DEFAULT, NO_VALUE, NO_VALUE_LONG, NAMELESS  }
 
     private String name;
@@ -26,6 +29,10 @@ public class Param {
 
     public String getValue() {
         return value;
+    }
+
+    public boolean isMasked(){
+        return masked;
     }
 
     public void setValue(String value) {

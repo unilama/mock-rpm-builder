@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.rpmmock.cmdrunner;
 
+import hudson.util.ArgumentListBuilder;
+
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -21,6 +23,15 @@ public class DefaultRunner implements RunnerInterface {
             stringBuilder.append(param);
         }
         return stringBuilder.toString();
+    }
+
+    public ArgumentListBuilder toArgumentListBuilder(){
+        ArgumentListBuilder argsBuilder = new ArgumentListBuilder();
+        argsBuilder.add(getCmdName());
+        for (Param param : getParams()) {
+            argsBuilder.add(param, param.isMasked());
+        }
+        return argsBuilder;
     }
 
     public Param[] getParams() {
